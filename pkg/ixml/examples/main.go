@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"sigs.k8s.io/node-feature-discovery/pkg/nvml"
+	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
 	//	"tkestack.io/gpu-manager/pkg/nvml"
 )
 
@@ -30,46 +30,46 @@ func failedMsg(msg string, err error) {
 }
 
 func main() {
-	if err := nvml.Init(); err != nil {
+	if err := ixml.Init(); err != nil {
 		fmt.Printf("nvml error: %+v", err)
 		return
 	}
-	defer nvml.Shutdown()
+	defer ixml.Shutdown()
 
-	ver, err := nvml.SystemGetDriverVersion()
+	ver, err := ixml.SystemGetDriverVersion()
 	if err != nil {
 		failedMsg("SystemGetDriverVersion", err)
 	} else {
 		fmt.Printf("SystemGetDriverVersion: %s\n", ver)
 	}
 
-	nvVer, err := nvml.SystemGetNVMLVersion()
+	nvVer, err := ixml.SystemGetNVMLVersion()
 	if err != nil {
 		failedMsg("SystemGetNVMLVersion", err)
 	} else {
 		fmt.Printf("nv driver: %s\n", nvVer)
 	}
 
-	name, err := nvml.SystemGetProcessName(1)
+	name, err := ixml.SystemGetProcessName(1)
 	if err != nil {
 		failedMsg("SystemGetProcessName", err)
 	} else {
 		fmt.Printf("No.1 process name is %s\n", name)
 	}
 
-	num, err := nvml.DeviceGetCount()
+	num, err := ixml.DeviceGetCount()
 	if err != nil {
 		failedMsg("DeviceGetCount", err)
 	} else {
 		fmt.Printf("We have %d cards\n", num)
 	}
 
-	cmpDev, _ := nvml.DeviceGetHandleByIndex(0)
+	cmpDev, _ := ixml.DeviceGetHandleByIndex(0)
 
 	for i := uint(0); i < num; i++ {
 		fmt.Println("============")
 
-		dev, err := nvml.DeviceGetHandleByIndex(i)
+		dev, err := ixml.DeviceGetHandleByIndex(i)
 		if err != nil {
 			failedMsg("DeviceGetHandleByIndex", err)
 		} else {
@@ -83,14 +83,14 @@ func main() {
 			fmt.Printf("Clear DeviceClearCpuAffinity\n")
 		}
 
-		enabled, err := dev.DeviceGetAPIRestriction(nvml.RESTRICTED_API_SET_APPLICATION_CLOCKS)
+		enabled, err := dev.DeviceGetAPIRestriction(ixml.RESTRICTED_API_SET_APPLICATION_CLOCKS)
 		if err != nil {
 			failedMsg("DeviceGetAPIRestriction", err)
 		} else {
 			fmt.Printf("RESTRICTED_API_SET_APPLICATION_CLOCKS: %+v\n", enabled)
 		}
 
-		clockMHz, err := dev.DeviceGetApplicationsClock(nvml.CLOCK_GRAPHICS)
+		clockMHz, err := dev.DeviceGetApplicationsClock(ixml.CLOCK_GRAPHICS)
 		if err != nil {
 			failedMsg("DeviceGetApplicationsClock", err)
 		} else {
@@ -191,14 +191,14 @@ func main() {
 			fmt.Printf("DeviceGetDecoderUtilization: %d, %d\n", decodeUtil, decodePeriod)
 		}
 
-		defClock, err := dev.DeviceGetDefaultApplicationsClock(nvml.CLOCK_GRAPHICS)
+		defClock, err := dev.DeviceGetDefaultApplicationsClock(ixml.CLOCK_GRAPHICS)
 		if err != nil {
 			failedMsg("DeviceGetDefaultApplicationsClock", err)
 		} else {
 			fmt.Printf("DeviceGetDefaultApplicationsClock: %d\n", defClock)
 		}
 
-		eccCounter, err := dev.DeviceGetDetailedEccErrors(nvml.MEMORY_ERROR_TYPE_CORRECTED, nvml.VOLATILE_ECC)
+		eccCounter, err := dev.DeviceGetDetailedEccErrors(ixml.MEMORY_ERROR_TYPE_CORRECTED, ixml.VOLATILE_ECC)
 		if err != nil {
 			failedMsg("DeviceGetDetailedEccErrors", err)
 		} else {
@@ -272,14 +272,14 @@ func main() {
 			fmt.Printf("DeviceGetInforomImageVersion: %s\n", inforomImageVer)
 		}
 
-		inforomVer, err := dev.DeviceGetInforomVersion(nvml.INFOROM_OEM)
+		inforomVer, err := dev.DeviceGetInforomVersion(ixml.INFOROM_OEM)
 		if err != nil {
 			failedMsg("DeviceGetInforomVersion", err)
 		} else {
 			fmt.Printf("DeviceGetInforomVersion: %s\n", inforomVer)
 		}
 
-		maxClock, err := dev.DeviceGetMaxClockInfo(nvml.CLOCK_MEM)
+		maxClock, err := dev.DeviceGetMaxClockInfo(ixml.CLOCK_MEM)
 		if err != nil {
 			failedMsg("DeviceGetMaxClockInfo", err)
 		} else {
@@ -301,7 +301,7 @@ func main() {
 		}
 
 		memEccCounter, err := dev.DeviceGetMemoryErrorCounter(
-			nvml.MEMORY_ERROR_TYPE_CORRECTED, nvml.VOLATILE_ECC, nvml.MEMORY_LOCATION_DEVICE_MEMORY)
+			ixml.MEMORY_ERROR_TYPE_CORRECTED, ixml.VOLATILE_ECC, ixml.MEMORY_LOCATION_DEVICE_MEMORY)
 		if err != nil {
 			failedMsg("DeviceGetMemoryErrorCounter", err)
 		} else {
@@ -350,7 +350,7 @@ func main() {
 			fmt.Printf("DeviceGetPcieReplayCounter: %d\n", replayCounter)
 		}
 
-		throughput, err := dev.DeviceGetPcieThroughput(nvml.PCIE_UTIL_RX_BYTES)
+		throughput, err := dev.DeviceGetPcieThroughput(ixml.PCIE_UTIL_RX_BYTES)
 		if err != nil {
 			failedMsg("DeviceGetPcieThroughput", err)
 		} else {
@@ -413,7 +413,7 @@ func main() {
 			fmt.Printf("DeviceGetPowerUsage: %d\n", powerUsage)
 		}
 
-		addresses, err := dev.DeviceGetRetiredPages(nvml.PAGE_RETIREMENT_CAUSE_DOUBLE_BIT_ECC_ERROR)
+		addresses, err := dev.DeviceGetRetiredPages(ixml.PAGE_RETIREMENT_CAUSE_DOUBLE_BIT_ECC_ERROR)
 		if err != nil {
 			failedMsg("DeviceGetRetiredPages", err)
 		} else {
@@ -471,35 +471,35 @@ func main() {
 			fmt.Printf("DeviceGetTemperature: %d\n", temper)
 		}
 
-		temperThreshold, err := dev.DeviceGetTemperatureThreshold(nvml.TEMPERATURE_THRESHOLD_SLOWDOWN)
+		temperThreshold, err := dev.DeviceGetTemperatureThreshold(ixml.TEMPERATURE_THRESHOLD_SLOWDOWN)
 		if err != nil {
 			failedMsg("DeviceGetTemperatureThreshold", err)
 		} else {
 			fmt.Printf("DeviceGetTemperatureThreshold: %d\n", temperThreshold)
 		}
 
-		gpuLevel, err := nvml.DeviceGetTopologyCommonAncestor(cmpDev, dev)
+		gpuLevel, err := ixml.DeviceGetTopologyCommonAncestor(cmpDev, dev)
 		if err != nil {
 			failedMsg("DeviceGetTopologyCommonAncestor", err)
 		} else {
 			fmt.Printf("DeviceGetTopologyCommonAncestor: %d\n", gpuLevel)
 		}
 
-		nearest, err := dev.DeviceGetTopologyNearestGpus(nvml.TOPOLOGY_HOSTBRIDGE)
+		nearest, err := dev.DeviceGetTopologyNearestGpus(ixml.TOPOLOGY_HOSTBRIDGE)
 		if err != nil {
 			failedMsg("DeviceGetTopologyNearestGpus", err)
 		} else {
 			fmt.Printf("DeviceGetTopologyNearestGpus: %+v\n", nearest)
 		}
 
-		tCounter, err := dev.DeviceGetTotalEccErrors(nvml.MEMORY_ERROR_TYPE_UNCORRECTED, nvml.VOLATILE_ECC)
+		tCounter, err := dev.DeviceGetTotalEccErrors(ixml.MEMORY_ERROR_TYPE_UNCORRECTED, ixml.VOLATILE_ECC)
 		if err != nil {
 			failedMsg("DeviceGetTotalEccErrors", err)
 		} else {
 			fmt.Printf("DeviceGetTotalEccErrors: volatile %d\n", tCounter)
 		}
 
-		tCounter, err = dev.DeviceGetTotalEccErrors(nvml.MEMORY_ERROR_TYPE_UNCORRECTED, nvml.AGGREGATE_ECC)
+		tCounter, err = dev.DeviceGetTotalEccErrors(ixml.MEMORY_ERROR_TYPE_UNCORRECTED, ixml.AGGREGATE_ECC)
 		if err != nil {
 			failedMsg("DeviceGetTotalEccErrors", err)
 		} else {
@@ -527,14 +527,14 @@ func main() {
 			fmt.Printf("DeviceGetVbiosVersion: %s\n", vbios)
 		}
 
-		violation, err := dev.DeviceGetViolationStatus(nvml.PERF_POLICY_POWER)
+		violation, err := dev.DeviceGetViolationStatus(ixml.PERF_POLICY_POWER)
 		if err != nil {
 			failedMsg("DeviceGetViolationStatus", err)
 		} else {
 			fmt.Printf("DeviceGetViolationStatus: %+v\n", violation)
 		}
 
-		sameBoard, err := nvml.DeviceOnSameBoard(cmpDev, dev)
+		sameBoard, err := ixml.DeviceOnSameBoard(cmpDev, dev)
 		if err != nil {
 			failedMsg("DeviceOnSameBoard", err)
 		} else {
@@ -564,7 +564,7 @@ func main() {
 			failedMsg("DeviceValidateInforom", err)
 		}
 
-		affinity, err := nvml.SystemGetTopologyGpuSet(0)
+		affinity, err := ixml.SystemGetTopologyGpuSet(0)
 		if err != nil {
 			failedMsg("SystemGetTopologyGpuSet", err)
 		} else {
@@ -579,7 +579,7 @@ func main() {
 		fmt.Printf("DeviceGetProcessUtilization: %v\n", processSamples)
 
 		func() {
-			var typeMask nvml.EventType = nvml.EventTypeNone
+			var typeMask ixml.EventType = ixml.EventTypeNone
 			supportedTypes, err := dev.DeviceGetSupportedEventTypes()
 			if err != nil {
 				failedMsg("DeviceGetSupportedEventTypes", err)
@@ -592,7 +592,7 @@ func main() {
 				fmt.Printf("\t%d\n", t)
 			}
 
-			evtSet, err := nvml.EventSetCreate()
+			evtSet, err := ixml.EventSetCreate()
 			if err != nil {
 				failedMsg("EventSetCreate", err)
 				return
@@ -601,7 +601,7 @@ func main() {
 			fmt.Printf("EventSetCreate\n")
 
 			defer func() {
-				deferErr := nvml.EventSetFree(evtSet)
+				deferErr := ixml.EventSetFree(evtSet)
 				if deferErr != nil {
 					failedMsg("EventSetFree", deferErr)
 				} else {
@@ -616,7 +616,7 @@ func main() {
 				fmt.Printf("DeviceRegisterEvents\n")
 			}
 
-			result, wErr := nvml.EventSetWait(*evtSet, 10000)
+			result, wErr := ixml.EventSetWait(*evtSet, 10000)
 			if wErr != nil {
 				failedMsg("EventSetWait", wErr)
 			} else {
@@ -636,7 +636,7 @@ func main() {
 		}()
 	}
 
-	hwcb, err := nvml.SystemGetHicVersion()
+	hwcb, err := ixml.SystemGetHicVersion()
 	if err != nil {
 		failedMsg("SystemGetHicVersion", err)
 	} else {

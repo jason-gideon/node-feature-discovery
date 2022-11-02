@@ -91,3 +91,36 @@ func detectPci() ([]nfdv1alpha1.InstanceFeature, error) {
 
 	return devInfo, nil
 }
+
+// detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
+// An error is returned if reading any of the mandatory attributes fails.
+func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
+	//Get GPU device attributes by device SDK
+	if err := ixml.Init(); err != nil {
+		fmt.Printf("nvml error: %+v", err)
+		return
+	}
+	defer ixml.Shutdown()
+
+	
+
+	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
+
+	devices, err := os.ReadDir(sysfsBasePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Iterate over devices
+	devInfo := make([]nfdv1alpha1.InstanceFeature, 0, len(devices))
+	for _, device := range devices {
+		info, err := readPciDevInfo(filepath.Join(sysfsBasePath, device.Name()))
+		if err != nil {
+			klog.Error(err)
+			continue
+		}
+		devInfo = append(devInfo, *info)
+	}
+
+	return devInfo, nil
+}
