@@ -25,6 +25,7 @@ import (
 	"k8s.io/klog/v2"
 
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/pkg/apis/nfd/v1alpha1"
+	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
 	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
 )
 
@@ -95,15 +96,15 @@ func detectPci() ([]nfdv1alpha1.InstanceFeature, error) {
 // detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
 // An error is returned if reading any of the mandatory attributes fails.
 func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
-	//Get GPU device attributes by device SDK
+	//todo once init
 	if err := ixml.Init(); err != nil {
 		fmt.Printf("nvml error: %+v", err)
-		return
+		return nil, err
 	}
 	defer ixml.Shutdown()
 
-	
 
+	//Get GPU device attributes by device SDK
 	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
 
 	devices, err := os.ReadDir(sysfsBasePath)

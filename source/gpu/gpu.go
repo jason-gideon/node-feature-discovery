@@ -25,7 +25,6 @@ import (
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/pkg/apis/nfd/v1alpha1"
 	"sigs.k8s.io/node-feature-discovery/pkg/utils"
 	"sigs.k8s.io/node-feature-discovery/source"
-	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
 )
 
 // Name of this feature source
@@ -142,8 +141,9 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 // Discover method of the FeatureSource interface
 func (s *gpuSource) Discover() error {
 	s.features = nfdv1alpha1.NewFeatures()
+	devs, err := detectIluvatar()
 
-	devs, err := detectPci()
+	//devs, err := detectPci()
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}
