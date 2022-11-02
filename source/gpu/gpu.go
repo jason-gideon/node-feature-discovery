@@ -31,7 +31,8 @@ import (
 const Name = "gpu"
 
 // DeviceFeature is the name of the feature set that holds all discovered PCI devices.
-const DeviceFeature = "device"
+const IXDeviceFeature = "iluvatar"
+const NVDeviceFeature = "nvidia"
 
 // Config holds the configuration parameters of this source.
 type Config struct {
@@ -115,7 +116,7 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 		}
 
 		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
-		if len(features.Instances[DeviceCount].Elements) > 0 {
+		if len(features.Instances[IXDeviceFeature].Elements) > 0 {
 			labels["ix.persent"] = true
 		}
 
@@ -185,7 +186,7 @@ func (s *gpuSource) Discover() error {
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}
-	s.features.Instances[DeviceFeature] = nfdv1alpha1.NewInstanceFeatures(devs)
+	s.features.Instances[IXDeviceFeature] = nfdv1alpha1.NewInstanceFeatures(devs)
 
 	utils.KlogDump(3, "discovered pci features:", "  ", s.features)
 
