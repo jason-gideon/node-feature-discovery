@@ -21,7 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	"tkestack.io/gpu-manager/pkg/nvml"
+	"sigs.k8s.io/node-feature-discovery/pkg/nvml"
+	//	"tkestack.io/gpu-manager/pkg/nvml"
 )
 
 func failedMsg(msg string, err error) {
