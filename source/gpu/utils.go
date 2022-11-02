@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 
 	"k8s.io/klog/v2"
 
@@ -30,10 +30,9 @@ import (
 	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
 )
 
-
 const (
-	Sdkdriver    = "sdkdriver"
-	DeviceCount        = "device_count"
+	Sdkdriver       = "sdkdriver"
+	DeviceCount     = "device_count"
 	CstateFeature   = "cstate"
 	PstateFeature   = "pstate"
 	RdtFeature      = "rdt"
@@ -146,7 +145,7 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		attrs[DeviceCount] = strconv.Itoa(devs)
+		attrs[DeviceCount] = strconv.FormatUint(uint64(devs), 10)
 	}
 
 	//SDK version
@@ -164,16 +163,11 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
 	//Firmware version
 	//todo ...
 
-
 	//////
 	//Read single Dev info
 	//device index
 
-
 	//device type
-
-
-
 
 	////
 	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
