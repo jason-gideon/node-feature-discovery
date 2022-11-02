@@ -21,12 +21,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"strconv"
 
 	"k8s.io/klog/v2"
 
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/pkg/apis/nfd/v1alpha1"
 	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
 	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
+)
+
+
+const (
+	Sdkdriver    = "sdkdriver"
+	DeviceCount        = "device_count"
+	CstateFeature   = "cstate"
+	PstateFeature   = "pstate"
+	RdtFeature      = "rdt"
+	SeFeature       = "se" // DEPRECATED in v0.12: will be removed in the future
+	SecurityFeature = "security"
+	SgxFeature      = "sgx" // DEPRECATED in v0.12: will be removed in the future
+	SstFeature      = "sst"
+	TopologyFeature = "topology"
 )
 
 var mandatoryDevAttrs = []string{"class", "vendor", "device", "subsystem_vendor", "subsystem_device"}
@@ -93,6 +108,26 @@ func detectPci() ([]nfdv1alpha1.InstanceFeature, error) {
 	return devInfo, nil
 }
 
+/*
+GPU设备如下：
+
+指定厂商的设备是否存在？
+
+gpu.<vendor>.persent=true/false
+
+
+
+指定厂商、指定设备类型是否存在？
+
+gpu.<vendor>.<device型号>.persent=true/false
+
+
+
+指定厂商，特定序号=》对应的设备类型是什么
+
+gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
+*/
+
 // detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
 // An error is returned if reading any of the mandatory attributes fails.
 func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
@@ -103,8 +138,44 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
 	}
 	defer ixml.Shutdown()
 
-
 	//Get GPU device attributes by device SDK
+	attrs := make(map[string]string)
+
+	//device exist?
+	devs, err := ixml.DeviceGetCount()
+	if err != nil {
+		return nil, err
+	} else {
+		attrs[DeviceCount] = strconv.Itoa(devs)
+	}
+
+	//SDK version
+	attrVal, err := ixml.SystemGetDriverVersion()
+	if err != nil {
+		return nil, err
+	} else {
+		attrs[Sdkdriver] = attrVal
+	}
+
+	info := make([]nfdv1alpha1.InstanceFeature, 0)
+	info = append(info, *nfdv1alpha1.NewInstanceFeature(attrs))
+	return info, nil
+
+	//Firmware version
+	//todo ...
+
+
+	//////
+	//Read single Dev info
+	//device index
+
+
+	//device type
+
+
+
+
+	////
 	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
 
 	devices, err := os.ReadDir(sysfsBasePath)

@@ -88,6 +88,44 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	labels := source.FeatureLabels{}
 	features := s.GetFeatures()
 
+	/*
+			GPU设备如下：
+
+		指定厂商的设备是否存在？
+
+		gpu.<vendor>.persent=true/false
+
+
+
+		指定厂商、指定设备类型是否存在？
+
+		gpu.<vendor>.<device型号>.persent=true/false
+
+
+
+		指定厂商，特定序号=》对应的设备类型是什么
+
+		gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
+	*/
+
+	for _, dev := range features.Instances[DeviceFeature].Elements {
+		//attrs := dev.Attributes
+		if dev.Attributes["devtype"] == "nd_dax" {
+
+		}
+
+		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
+		if len(features.Instances[DeviceCount].Elements) > 0 {
+			labels["ix.persent"] = true
+		}
+
+		//具体的打label，不同厂家的要分开。。
+
+	}
+
+	return labels, nil
+
+	////////////////////////
 	// Construct a device label format, a sorted list of valid attributes
 	deviceLabelFields := make([]string, 0)
 	configLabelFields := make(map[string]struct{}, len(s.config.DeviceLabelFields))
