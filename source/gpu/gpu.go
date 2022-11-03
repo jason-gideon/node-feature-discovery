@@ -122,15 +122,27 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	// Iterate over all device classes
 	for _, dev := range features.Instances[IXDeviceFeature].Elements {
 		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
-		if len(features.Instances[IXDeviceFeature].Elements) > 0 {
-			labels["ix.persent"] = true
-		}
+		// if len(features.Instances[IXDeviceFeature].Elements) > 0 {
+		// 	labels["ix.persent"] = true
+		// }
 
 		//具体的打label，不同厂家的要分开。。
+		// DeviceIndex     = "device_index"
+		// DeviceName      = "device_name"
 
 		//指定厂商、指定设备类型是否存在？
 		//gpu.<vendor>.<device型号>.persent=true/false
+		attrs := dev.Attributes
+		name := attrs[DeviceName]
 
+		//todo name
+		labels[name+".present"] = true
+		
+
+		//指定厂商，特定序号=》对应的设备类型是什么
+		//gpu.<vendor>.<序号>=device型号
+		idx := attrs[DeviceIndex]
+		labels[IXDeviceFeature+"."+idx] = name
 	}
 
 	return labels, nil
