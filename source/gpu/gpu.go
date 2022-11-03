@@ -97,7 +97,7 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 
 	//sdk driver version
 	if version, ok := features.Attributes[vendor].Elements[DriverVersion]; ok {
-		labels[vendor+"."+DriverVersion] = version
+		labels[vendor+"_"+DriverVersion] = version
 	}
 
 	// Iterate over all device classes
@@ -187,8 +187,8 @@ func (s *gpuSource) Discover() error {
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}
-	s.features.Attributes[IXDeviceFeature] = *attrs
-	s.features.Instances[IXDeviceFeature] = nfdv1alpha1.NewInstanceFeatures(devs)
+	s.features.Attributes["iluvatar_info"] = *attrs
+	s.features.Instances["iluvatar_dev"] = nfdv1alpha1.NewInstanceFeatures(devs)
 
 	utils.KlogDump(3, "discovered pci features:", "  ", s.features)
 
