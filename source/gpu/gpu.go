@@ -109,7 +109,7 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 		gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
 	*/
 
-	for _, dev := range features.Instances[DeviceFeature].Elements {
+	for _, dev := range features.Instances[IXDeviceFeature].Elements {
 		//attrs := dev.Attributes
 		if dev.Attributes["devtype"] == "nd_dax" {
 
@@ -153,7 +153,7 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	}
 
 	// Iterate over all device classes
-	for _, dev := range features.Instances[DeviceFeature].Elements {
+	for _, dev := range features.Instances[IXDeviceFeature].Elements {
 		attrs := dev.Attributes
 		class := attrs["class"]
 		for _, white := range s.config.DeviceClassWhitelist {
