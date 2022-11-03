@@ -35,97 +35,10 @@ const (
 	DeviceCount     = "device_count"
 	DeviceIndex     = "device_index"
 	DeviceName      = "device_name"
-	RdtFeature      = "rdt"
-	SeFeature       = "se" // DEPRECATED in v0.12: will be removed in the future
-	SecurityFeature = "security"
-	SgxFeature      = "sgx" // DEPRECATED in v0.12: will be removed in the future
-	SstFeature      = "sst"
-	TopologyFeature = "topology"
 )
 
 var mandatoryDevAttrs = []string{"class", "vendor", "device", "subsystem_vendor", "subsystem_device"}
 var optionalDevAttrs = []string{"sriov_totalvfs", "iommu_group/type", "iommu/intel-iommu/version"}
-
-// Read a single PCI device attribute
-// A PCI attribute in this context, maps to the corresponding sysfs file
-func readSinglePciAttribute(devPath string, attrName string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(devPath, attrName))
-	if err != nil {
-		return "", fmt.Errorf("failed to read device attribute %s: %v", attrName, err)
-	}
-	// Strip whitespace and '0x' prefix
-	attrVal := strings.TrimSpace(strings.TrimPrefix(string(data), "0x"))
-
-	if attrName == "class" && len(attrVal) > 4 {
-		// Take four first characters, so that the programming
-		// interface identifier gets stripped from the raw class code
-		attrVal = attrVal[0:4]
-	}
-	return attrVal, nil
-}
-
-// Read information of one PCI device
-func readPciDevInfo(devPath string) (*nfdv1alpha1.InstanceFeature, error) {
-	attrs := make(map[string]string)
-	for _, attr := range mandatoryDevAttrs {
-		attrVal, err := readSinglePciAttribute(devPath, attr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read device %s: %s", attr, err)
-		}
-		attrs[attr] = attrVal
-	}
-	for _, attr := range optionalDevAttrs {
-		attrVal, err := readSinglePciAttribute(devPath, attr)
-		if err == nil {
-			attrs[attr] = attrVal
-		}
-	}
-	return nfdv1alpha1.NewInstanceFeature(attrs), nil
-}
-
-// detectPci detects available PCI devices and retrieves their device attributes.
-// An error is returned if reading any of the mandatory attributes fails.
-func detectPci() ([]nfdv1alpha1.InstanceFeature, error) {
-	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
-
-	devices, err := os.ReadDir(sysfsBasePath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Iterate over devices
-	devInfo := make([]nfdv1alpha1.InstanceFeature, 0, len(devices))
-	for _, device := range devices {
-		info, err := readPciDevInfo(filepath.Join(sysfsBasePath, device.Name()))
-		if err != nil {
-			klog.Error(err)
-			continue
-		}
-		devInfo = append(devInfo, *info)
-	}
-
-	return devInfo, nil
-}
-
-/*
-GPU设备如下：
-
-指定厂商的设备是否存在？
-
-gpu.<vendor>.persent=true/false
-
-
-
-指定厂商、指定设备类型是否存在？
-
-gpu.<vendor>.<device型号>.persent=true/false
-
-
-
-指定厂商，特定序号=》对应的设备类型是什么
-
-gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
-*/
 
 // detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
 // An error is returned if reading any of the mandatory attributes fails.

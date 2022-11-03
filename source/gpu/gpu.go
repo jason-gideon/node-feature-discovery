@@ -100,23 +100,12 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 
 	//sdk driver version
 	if version, ok := features.Attributes[IXFeatureInfo].Elements[DriverVersion]; ok {
-		labels[vendor+"_"+DriverVersion] = version
+		labels[vendor+"."+DriverVersion] = version
 	}
 
 	// Iterate over all device classes
 	for _, dev := range features.Instances[IXDeviceFeature].Elements {
-		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
-		// if len(features.Instances[IXDeviceFeature].Elements) > 0 {
-		// 	labels["ix.persent"] = true
-		// }
-
-		//具体的打label，不同厂家的要分开。。
-		// DeviceIndex     = "device_index"
-		// DeviceName      = "device_name"
-
-		//指定厂商、指定设备类型是否存在？
-		//gpu.<vendor>.<device型号>.persent=true/false
-		//eg: iluvatar BI-100
+		//gpu.<vendor>.<device型号>.persent=true/false	//eg: iluvatar BI-100
 		attrs := dev.Attributes
 		name := attrs[DeviceName]
 		name = strings.TrimSpace(strings.ReplaceAll(strings.ToLower(name), vendor, ""))
@@ -126,57 +115,6 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 		//gpu.<vendor>.<device_inde>.<序号>=device型号
 		idx := attrs[DeviceIndex]
 		labels[vendor+"."+DeviceIndex+"."+idx] = name
-	}
-
-	return labels, nil
-
-	////////////////////////
-	// Construct a device label format, a sorted list of valid attributes
-	deviceLabelFields := make([]string, 0)
-	configLabelFields := make(map[string]struct{}, len(s.config.DeviceLabelFields))
-	for _, field := range s.config.DeviceLabelFields {
-		configLabelFields[field] = struct{}{}
-	}
-
-	for _, attr := range mandatoryDevAttrs {
-		if _, ok := configLabelFields[attr]; ok {
-			deviceLabelFields = append(deviceLabelFields, attr)
-			delete(configLabelFields, attr)
-		}
-	}
-	if len(configLabelFields) > 0 {
-		keys := []string{}
-		for key := range configLabelFields {
-			keys = append(keys, key)
-		}
-		klog.Warningf("invalid fields (%s) in deviceLabelFields, ignoring...", strings.Join(keys, ", "))
-	}
-	if len(deviceLabelFields) == 0 {
-		klog.Warningf("no valid fields in deviceLabelFields defined, using the defaults")
-		deviceLabelFields = []string{"class", "vendor"}
-	}
-
-	// Iterate over all device classes
-	for _, dev := range features.Instances[IXDeviceFeature].Elements {
-		attrs := dev.Attributes
-		class := attrs["class"]
-		for _, white := range s.config.DeviceClassWhitelist {
-			if strings.HasPrefix(string(class), strings.ToLower(white)) {
-				devLabel := ""
-				for i, attr := range deviceLabelFields {
-					devLabel += attrs[attr]
-					if i < len(deviceLabelFields)-1 {
-						devLabel += "_"
-					}
-				}
-				labels[devLabel+".present"] = true
-
-				if _, ok := attrs["sriov_totalvfs"]; ok {
-					labels[devLabel+".sriov.capable"] = true
-				}
-				break
-			}
-		}
 	}
 	return labels, nil
 }
