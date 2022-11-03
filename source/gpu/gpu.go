@@ -88,39 +88,20 @@ func (s *gpuSource) Priority() int { return 0 }
 func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	labels := source.FeatureLabels{}
 	features := s.GetFeatures()
-
-	/*
-			GPU设备如下：
-
-		指定厂商的设备是否存在？
-
-		gpu.<vendor>.persent=true/false
-
-
-
-		指定厂商、指定设备类型是否存在？
-
-		gpu.<vendor>.<device型号>.persent=true/false
-
-
-
-		指定厂商，特定序号=》对应的设备类型是什么
-
-		gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
-	*/
-
+	vendor := IXDeviceFeature
+	
 	// device persent
-	if len(features.Instances[IXDeviceFeature].Elements) > 0 {
-		labels[IXDeviceFeature+".present"] = true
+	if len(features.Instances[vendor].Elements) > 0 {
+		labels[vendor+".present"] = true
 	}
 
 	//sdk driver version
-	if version, ok := features.Attributes[IXDeviceFeature].Elements[DriverVersion]; ok {
-		labels[IXDeviceFeature+"."+DriverVersion] = version
+	if version, ok := features.Attributes[vendor].Elements[DriverVersion]; ok {
+		labels[vendor+"."+DriverVersion] = version
 	}
 
 	// Iterate over all device classes
-	for _, dev := range features.Instances[IXDeviceFeature].Elements {
+	for _, dev := range features.Instances[vendor].Elements {
 		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
 		// if len(features.Instances[IXDeviceFeature].Elements) > 0 {
 		// 	labels["ix.persent"] = true
@@ -132,17 +113,16 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 
 		//指定厂商、指定设备类型是否存在？
 		//gpu.<vendor>.<device型号>.persent=true/false
+		//eg: iluvatar BI-100
 		attrs := dev.Attributes
 		name := attrs[DeviceName]
-
-		//todo name
-		labels[name+".present"] = true
-		
+		name = strings.TrimSpace(strings.ReplaceAll(strings.ToLower(name), vendor, ""))
+		labels[vendor+"."+name+".present"] = true
 
 		//指定厂商，特定序号=》对应的设备类型是什么
-		//gpu.<vendor>.<序号>=device型号
+		//gpu.<vendor>.<device_inde>.<序号>=device型号
 		idx := attrs[DeviceIndex]
-		labels[IXDeviceFeature+"."+idx] = name
+		labels[vendor+"."+DeviceIndex+"."+idx] = name
 	}
 
 	return labels, nil
