@@ -109,18 +109,27 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 		gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有空格将替换为k8s label能够识别的字符）
 	*/
 
+	// device persent
+	if len(features.Instances[IXDeviceFeature].Elements) > 0 {
+		labels[IXDeviceFeature+".present"] = true
+	}
+
+	//sdk driver version
+	if version, ok := features.Attributes[IXDeviceFeature].Elements[DriverVersion]; ok {
+		labels[IXDeviceFeature+"."+DriverVersion] = version
+	}
+
+	// Iterate over all device classes
 	for _, dev := range features.Instances[IXDeviceFeature].Elements {
-		//attrs := dev.Attributes
-		if dev.Attributes["devtype"] == "nd_dax" {
-
-		}
-
 		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
 		if len(features.Instances[IXDeviceFeature].Elements) > 0 {
 			labels["ix.persent"] = true
 		}
 
 		//具体的打label，不同厂家的要分开。。
+
+		//指定厂商、指定设备类型是否存在？
+		//gpu.<vendor>.<device型号>.persent=true/false
 
 	}
 
@@ -180,12 +189,13 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 // Discover method of the FeatureSource interface
 func (s *gpuSource) Discover() error {
 	s.features = nfdv1alpha1.NewFeatures()
-	devs, err := detectIluvatar()
+	devs, attrs, err := detectIluvatar()
 
 	//devs, err := detectPci()
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}
+	s.features.Attributes[IXDeviceFeature] = *attrs
 	s.features.Instances[IXDeviceFeature] = nfdv1alpha1.NewInstanceFeatures(devs)
 
 	utils.KlogDump(3, "discovered pci features:", "  ", s.features)
