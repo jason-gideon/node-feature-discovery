@@ -31,8 +31,11 @@ import (
 const Name = "gpu"
 
 // DeviceFeature is the name of the feature set that holds all discovered PCI devices.
-const IXDeviceFeature = "iluvatar"
+// const IXDeviceFeature = "iluvatar"
 const NVDeviceFeature = "nvidia"
+
+const IXFeatureInfo = "iluvatar_info"
+const IXDeviceFeature = "iluvatar_dev"
 
 // Config holds the configuration parameters of this source.
 type Config struct {
@@ -88,20 +91,20 @@ func (s *gpuSource) Priority() int { return 0 }
 func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	labels := source.FeatureLabels{}
 	features := s.GetFeatures()
-	vendor := IXDeviceFeature
-	
+	vendor := "iluvatar"
+
 	// device persent
-	if len(features.Instances[vendor].Elements) > 0 {
+	if len(features.Instances[IXDeviceFeature].Elements) > 0 {
 		labels[vendor+".present"] = true
 	}
 
 	//sdk driver version
-	if version, ok := features.Attributes[vendor].Elements[DriverVersion]; ok {
+	if version, ok := features.Attributes[IXFeatureInfo].Elements[DriverVersion]; ok {
 		labels[vendor+"_"+DriverVersion] = version
 	}
 
 	// Iterate over all device classes
-	for _, dev := range features.Instances[vendor].Elements {
+	for _, dev := range features.Instances[IXDeviceFeature].Elements {
 		//指定厂商的设备是否存在？gpu.<vendor>.persent=true/false
 		// if len(features.Instances[IXDeviceFeature].Elements) > 0 {
 		// 	labels["ix.persent"] = true
@@ -187,8 +190,8 @@ func (s *gpuSource) Discover() error {
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}
-	s.features.Attributes["iluvatar_info"] = *attrs
-	s.features.Instances["iluvatar_dev"] = nfdv1alpha1.NewInstanceFeatures(devs)
+	s.features.Attributes[IXFeatureInfo] = *attrs
+	s.features.Instances[IXDeviceFeature] = nfdv1alpha1.NewInstanceFeatures(devs)
 
 	utils.KlogDump(3, "discovered pci features:", "  ", s.features)
 
