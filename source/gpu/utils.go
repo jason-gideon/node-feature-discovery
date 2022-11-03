@@ -31,10 +31,10 @@ import (
 )
 
 const (
-	Sdkdriver       = "sdkdriver"
+	DriverVersion   = "driver_version"
 	DeviceCount     = "device_count"
-	CstateFeature   = "cstate"
-	PstateFeature   = "pstate"
+	DeviceIndex     = "device_index"
+	DeviceName      = "device_name"
 	RdtFeature      = "rdt"
 	SeFeature       = "se" // DEPRECATED in v0.12: will be removed in the future
 	SecurityFeature = "security"
@@ -129,58 +129,45 @@ gpu.<vendor>.<序号>=device型号（型号由厂商sdk直接获取，如果有�
 
 // detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
 // An error is returned if reading any of the mandatory attributes fails.
-func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
-	//todo once init
+func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeatureSet, error) {
+	//todo once init ...
 	if err := ixml.Init(); err != nil {
 		fmt.Printf("nvml error: %+v", err)
-		return nil, err
+		return nil, nil, err
 	}
 	defer ixml.Shutdown()
 
 	//Get GPU device attributes by device SDK
-	attrs := make(map[string]string)
-
-	//device exist?
-	devs, err := ixml.DeviceGetCount()
-	if err != nil {
-		return nil, err
-	} else {
-		attrs[DeviceCount] = strconv.FormatUint(uint64(devs), 10)
-	}
+	//Get Attribute
 
 	//SDK version
-	attrVal, err := ixml.SystemGetDriverVersion()
+	attrs := make(map[string]string)
+	driverVersion, err := ixml.SystemGetDriverVersion()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	} else {
-		attrs[Sdkdriver] = attrVal
+		attrs[DriverVersion] = driverVersion
 	}
-
-	info := make([]nfdv1alpha1.InstanceFeature, 0)
-	info = append(info, *nfdv1alpha1.NewInstanceFeature(attrs))
-	return info, nil
 
 	//Firmware version
 	//todo ...
 
-	//////
-	//Read single Dev info
-	//device index
-
-	//device type
-
-	////
-	sysfsBasePath := hostpath.SysfsDir.Path("bus/pci/devices")
-
-	devices, err := os.ReadDir(sysfsBasePath)
+	//device exist?
+	devs, err := ixml.DeviceGetCount()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	} else {
+		attrs[DeviceCount] = strconv.FormatUint(uint64(devs), 10)
 	}
 
-	// Iterate over devices
-	devInfo := make([]nfdv1alpha1.InstanceFeature, 0, len(devices))
-	for _, device := range devices {
-		info, err := readPciDevInfo(filepath.Join(sysfsBasePath, device.Name()))
+	attrFeatures := nfdv1alpha1.NewAttributeFeatures(attrs)
+
+	//////
+	//Get Instance
+	devInfo := make([]nfdv1alpha1.InstanceFeature, 0)
+	//Read single Dev info
+	for idx := uint(0); idx < devs; idx++ {
+		info, err := readSingleIluvaterDeviceInfo(idx)
 		if err != nil {
 			klog.Error(err)
 			continue
@@ -188,5 +175,27 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, error) {
 		devInfo = append(devInfo, *info)
 	}
 
-	return devInfo, nil
+	//info = append(info, *nfdv1alpha1.NewInstanceFeature(attrs))
+	return devInfo, &attrFeatures, nil
+}
+
+func readSingleIluvaterDeviceInfo(idx uint) (*nfdv1alpha1.InstanceFeature, error) {
+	attrs := make(map[string]string)
+	//device index
+	dev, err := ixml.DeviceGetHandleByIndex(idx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read iluvater device idx %d: %s", idx, err)
+	}
+	attrs[DeviceIndex] = strconv.FormatUint(uint64(idx), 10)
+
+	//device name
+	name, err := dev.DeviceGetName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read iluvater device idx %d: %s", idx, err)
+	}
+	attrs[DeviceName] = name
+
+	//todo anothers..
+
+	return nfdv1alpha1.NewInstanceFeature(attrs), nil
 }
