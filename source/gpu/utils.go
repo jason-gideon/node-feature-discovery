@@ -18,20 +18,23 @@ package gpu
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"k8s.io/klog/v2"
 
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/pkg/apis/nfd/v1alpha1"
 	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
-	"tkestack.io/nvml"
+	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
 )
 
 const (
-	DriverVersion = "driver_version"
-	DeviceCount   = "device_count"
-	DeviceIndex   = "device_index"
-	DeviceName    = "device_name"
+	DriverVersion   = "driver_version"
+	DeviceCount     = "device_count"
+	DeviceIndex     = "device_index"
+	DeviceName      = "device_name"
 )
 
 var mandatoryDevAttrs = []string{"class", "vendor", "device", "subsystem_vendor", "subsystem_device"}
@@ -42,7 +45,7 @@ var optionalDevAttrs = []string{"sriov_totalvfs", "iommu_group/type", "iommu/int
 func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeatureSet, error) {
 	//todo once init ...
 	if err := ixml.Init(); err != nil {
-		klog.Errorf("ixml error: %+v", err)
+		fmt.Printf("nvml error: %+v", err)
 		return nil, nil, err
 	}
 	defer ixml.Shutdown()
@@ -54,7 +57,6 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeat
 	attrs := make(map[string]string)
 	driverVersion, err := ixml.SystemGetDriverVersion()
 	if err != nil {
-		klog.Errorf("ixml error: %+v", err)
 		return nil, nil, err
 	} else {
 		attrs[DriverVersion] = driverVersion
@@ -66,7 +68,6 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeat
 	//device exist?
 	devs, err := ixml.DeviceGetCount()
 	if err != nil {
-		klog.Errorf("ixml error: %+v", err)
 		return nil, nil, err
 	} else {
 		attrs[DeviceCount] = strconv.FormatUint(uint64(devs), 10)
@@ -104,81 +105,6 @@ func readSingleIluvaterDeviceInfo(idx uint) (*nfdv1alpha1.InstanceFeature, error
 	name, err := dev.DeviceGetName()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read iluvater device idx %d: %s", idx, err)
-	}
-	attrs[DeviceName] = name
-
-	//todo anothers..
-
-	return nfdv1alpha1.NewInstanceFeature(attrs), nil
-}
-
-// detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
-// An error is returned if reading any of the mandatory attributes fails.
-func detectNvidia() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeatureSet, error) {
-	//todo once init ...
-	if err := nvml.Init(); err != nil {
-		klog.Errorf("nvml error: %+v", err)
-		return nil, nil, err
-	}
-	defer nvml.Shutdown()
-
-	//Get GPU device attributes by device SDK
-	//Get Attribute
-
-	//SDK version
-	attrs := make(map[string]string)
-	driverVersion, err := nvml.SystemGetDriverVersion()
-	if err != nil {
-		klog.Errorf("nvml error: %+v", err)
-		return nil, nil, err
-	} else {
-		attrs[DriverVersion] = driverVersion
-	}
-
-	//Firmware version
-	//todo ...
-
-	//device exist?
-	devs, err := nvml.DeviceGetCount()
-	if err != nil {
-		klog.Errorf("nvml error: %+v", err)
-		return nil, nil, err
-	} else {
-		attrs[DeviceCount] = strconv.FormatUint(uint64(devs), 10)
-	}
-
-	attrFeatures := nfdv1alpha1.NewAttributeFeatures(attrs)
-
-	//////
-	//Get Instance
-	devInfo := make([]nfdv1alpha1.InstanceFeature, 0)
-	//Read single Dev info
-	for idx := uint(0); idx < devs; idx++ {
-		info, err := readSingleIluvaterDeviceInfo(idx)
-		if err != nil {
-			klog.Error(err)
-			continue
-		}
-		devInfo = append(devInfo, *info)
-	}
-
-	//info = append(info, *nfdv1alpha1.NewInstanceFeature(attrs))
-	return devInfo, &attrFeatures, nil
-}
-
-func readSingleNvidiaDeviceInfo(idx uint) (*nfdv1alpha1.InstanceFeature, error) {
-	attrs := make(map[string]string)
-	//device index
-	dev, err := nvml.DeviceGetHandleByIndex(idx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Nvidia device idx %d: %s", idx, err)
-	}
-	attrs[DeviceIndex] = strconv.FormatUint(uint64(idx), 10)
-
-	//device name
-	name, err := dev.DeviceGetName()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Nvidia device idx %d: %s", idx, err)
 	}
 	attrs[DeviceName] = name
 
