@@ -30,7 +30,6 @@ require (
 	k8s.io/kubernetes v1.25.3
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 	sigs.k8s.io/yaml v1.2.0
-	tkestack.io/nvml v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -225,5 +224,3 @@ replace (
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.25.0
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.25.0
 )
-
-replace tkestack.io/nvml => github.com/tkestack/go-nvml v0.0.0-20210615023610-c7d2f39db60c
