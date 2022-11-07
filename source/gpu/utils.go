@@ -18,23 +18,19 @@ package gpu
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"k8s.io/klog/v2"
 
 	nfdv1alpha1 "sigs.k8s.io/node-feature-discovery/pkg/apis/nfd/v1alpha1"
 	"sigs.k8s.io/node-feature-discovery/pkg/ixml"
-	"sigs.k8s.io/node-feature-discovery/pkg/utils/hostpath"
 )
 
 const (
-	DriverVersion   = "driver_version"
-	DeviceCount     = "device_count"
-	DeviceIndex     = "device_index"
-	DeviceName      = "device_name"
+	DriverVersion = "driver_version"
+	DeviceCount   = "device_count"
+	DeviceIndex   = "device_index"
+	DeviceName    = "device_name"
 )
 
 var mandatoryDevAttrs = []string{"class", "vendor", "device", "subsystem_vendor", "subsystem_device"}
