@@ -119,12 +119,11 @@ func (s *gpuSource) GetLabels() (source.FeatureLabels, error) {
 	return labels, nil
 }
 
+//TODO check device vendor before Discovery...
 // Discover method of the FeatureSource interface
 func (s *gpuSource) Discover() error {
 	s.features = nfdv1alpha1.NewFeatures()
-	devs, attrs, err := detectIluvatar()
-
-	//devs, err := detectPci()
+	devs, attrs, err := detectDevice()
 	if err != nil {
 		return fmt.Errorf("failed to detect PCI devices: %s", err.Error())
 	}

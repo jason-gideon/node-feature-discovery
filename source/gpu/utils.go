@@ -36,9 +36,11 @@ const (
 var mandatoryDevAttrs = []string{"class", "vendor", "device", "subsystem_vendor", "subsystem_device"}
 var optionalDevAttrs = []string{"sriov_totalvfs", "iommu_group/type", "iommu/intel-iommu/version"}
 
+//TODO check device vendor before Discovery
+
 // detectIluvatar detects available Iluvatar GPU devices and retrieves their device attributes.
 // An error is returned if reading any of the mandatory attributes fails.
-func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeatureSet, error) {
+func detectDevice() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeatureSet, error) {
 	//todo once init ...
 	if err := ixml.Init(); err != nil {
 		fmt.Printf("nvml error: %+v", err)
@@ -76,7 +78,7 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeat
 	devInfo := make([]nfdv1alpha1.InstanceFeature, 0)
 	//Read single Dev info
 	for idx := uint(0); idx < devs; idx++ {
-		info, err := readSingleIluvaterDeviceInfo(idx)
+		info, err := readSingleDeviceInfo(idx)
 		if err != nil {
 			klog.Error(err)
 			continue
@@ -88,7 +90,7 @@ func detectIluvatar() ([]nfdv1alpha1.InstanceFeature, *nfdv1alpha1.AttributeFeat
 	return devInfo, &attrFeatures, nil
 }
 
-func readSingleIluvaterDeviceInfo(idx uint) (*nfdv1alpha1.InstanceFeature, error) {
+func readSingleDeviceInfo(idx uint) (*nfdv1alpha1.InstanceFeature, error) {
 	attrs := make(map[string]string)
 	//device index
 	dev, err := ixml.DeviceGetHandleByIndex(idx)

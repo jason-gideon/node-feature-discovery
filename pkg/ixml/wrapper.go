@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 /*
@@ -54,13 +55,21 @@ const char *NVML_DL(nvmlErrorString)(nvmlReturn_t result) {
   return ((*errSym)(result));
 }
 
+///
+// Load iluvater device first. if iluvater device NOT exist, then load Nvidia device.(iluvater and nvidia NOT allowed in same node)
+
 // http://docs.nvidia.com/deploy/nvml-api/group__nvmlInitializationAndCleanup.html
 nvmlReturn_t NVML_DL(nvmlInit)(void) {
   nvmlSym_t sym;
 
+	// 1.first load iluvater
   handle = dlopen("libixml.so", RTLD_NOW | RTLD_NODELETE | RTLD_GLOBAL);
   if (handle == NULL) {
-    return (NVML_ERROR_LIBRARY_NOT_FOUND);
+		// 2.iluvater failed, then load nvidia
+		handle = dlopen("libnvml.so", RTLD_NOW | RTLD_NODELETE | RTLD_GLOBAL);
+    if (handle == NULL) {
+      return (NVML_ERROR_LIBRARY_NOT_FOUND);
+  	}
   }
 
 #if NVML_API_VERSION >= 9
